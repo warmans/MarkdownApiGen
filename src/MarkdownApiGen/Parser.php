@@ -1,9 +1,11 @@
 <?php
-/**
- * TODO: Change name of library. actually produces markdown from a package. Not a wiki from a lib.
- */
 namespace MarkdownApiGen {
 
+    /**
+     * Parses files into memory ready for rendering as markdown.
+     *
+     * @author warmans
+     */
     class Parser {
 
         private $_dataCache = array(

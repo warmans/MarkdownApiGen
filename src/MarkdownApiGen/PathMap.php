@@ -1,8 +1,6 @@
 <?php
 /**
- * FileMap
- *
- * Map paths in a directory to real names. USed for select boxes of file contents mostly.
+ * Get a list of paths and file names.
  *
  * @author warmans
  */
@@ -12,6 +10,12 @@ namespace MarkdownApiGen {
 
         private $_map = array();
 
+        /**
+         * Scan the supplied directory for files (recursive).
+         *
+         * @param string $basePath
+         * @param string $excludeExtension
+         */
         public function __construct($basePath, $excludeExtension='.php') {
 
             $iterator = new \RecursiveDirectoryIterator($basePath);
@@ -25,6 +29,10 @@ namespace MarkdownApiGen {
             }
         }
 
+        /**
+         * Get the mapping
+         * @return array
+         */
         public function getMap(){
             return $this->_map;
         }

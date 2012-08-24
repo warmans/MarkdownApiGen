@@ -1,8 +1,8 @@
 <?php
 /**
- * DocBlock
+ * Process a dockblock to allow simple access of it's parts
  *
- * @author Stefan
+ * @author warmans
  */
 namespace MarkdownApiGen {
 
