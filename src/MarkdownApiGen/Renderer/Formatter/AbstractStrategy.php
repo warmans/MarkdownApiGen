@@ -1,14 +1,12 @@
 <?php
-namespace MarkdownApiGen\RenderStrategy  {
+namespace MarkdownApiGen\Renderer\Formatter {
 
     /**
-     * Abstract Render Strategy
-     *
-     * Defined the interface for a renderer.
+     * Abstract Formatter Strategy. The methods a formatter must implement to be used as a formatter strategy.
      *
      * @author Stefan
      */
-    abstract class AbstractRenderer {
+    abstract class AbstractStrategy {
 
         abstract public function H1($text);
 

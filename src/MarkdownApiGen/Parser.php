@@ -11,13 +11,25 @@ namespace MarkdownApiGen {
         );
 
         private $_outputDir;
+        private $_fs;
+        private $_apiName;
 
-        private $_rs;
+        private $_config = array();
 
-        public function __construct($outputDir, \MarkdownApiGen\RenderStrategy\AbstractRenderer $renderStrategy)
+        public function __construct($outputDir, Renderer\Formatter\AbstractStrategy $formatStrategy, $apiName)
         {
             $this->_outputDir = $outputDir;
-            $this->_rs = $renderStrategy;
+            $this->_fs = $formatStrategy;
+            $this->_apiName = $apiName;
+        }
+
+        /**
+         * Add additional config to the parser
+         * @param array $config
+         */
+        public function setConfig(array $config)
+        {
+            $this->_config = $config;
         }
 
         /**
@@ -37,11 +49,17 @@ namespace MarkdownApiGen {
                     $className = '\\'.trim(str_replace('/', '\\', $matches[1]), '\\');
                 }
 
+                //include the class
                 require_once($path);
-                $this->_parseClass(new \ReflectionClass($className));
+
+                //fixme: the file we just included may not even be a class...
+                if(class_exists($className))
+                {
+                    $this->_parseClass(new \ReflectionClass($className));
+                }
             }
 
-            die($this->_flushOutputToDisk());
+            return $this->_renderApiDoc();
         }
 
         private function _parseClass(\ReflectionClass $class)
@@ -99,89 +117,23 @@ namespace MarkdownApiGen {
             return (isset($matches[1]) && !strstr($matches[1], '$')) ? $matches[1] : null;
         }
 
-        private function _flushOutputToDisk()
+        private function _renderApiDoc()
         {
-            $output = array();
-            $output[] = $this->_rs->H1('Package Name');
-
-            foreach($this->_dataCache['namespaces'] as $namespace=>$classes)
-            {
-                $output[] = $this->_rs->H2($namespace);
-                foreach($classes as $className=>$classDetails)
-                {
-                    //Class title
-                    $output[] = $this->_rs->H3($className);
-
-                    //Annotations e.g. author
-                    $classAnnotations = array();
-                    foreach($classDetails['doc']->getAnnotations() as $annotationTag => $annotationValue)
-                    {
-                        $classAnnotations[] = "$annotationTag : $annotationValue";
-                    }
-
-                    //Methods
-                    $methodsBlock = array();
-                    foreach($classDetails['methods'] as $methodName=>$methodDetails)
-                    {
-                        //Parse arguments to line
-                        $argumentLine  = array();
-                        foreach($methodDetails['params'] as $paramNum => $param)
-                        {
-                            $paramAnnotation = $methodDetails['doc']->getAnnotation('param');
-                            $paramTypeHint = $param['type'] ?: $paramAnnotation[$paramNum]['type'];
-                            $argumentLine[] = (($param['required'] == 'required') ? '' : '[').$paramTypeHint.' $'.$param['name'].(($param['required'] == 'required') ? '' : ']');
-                        }
-
-                        //Method name and args
-                        $methodsBlock[] = $this->_rs->Paragraph($this->_rs->Pre(
-                            $this->_rs->Label($methodDetails['visibility']).' '.$this->_rs->strong($methodName).'( '.implode(", ", $argumentLine).' )'
-                        ));
-
-                        //Method DocBlock
-                        $annotations = $methodDetails['doc']->getAnnotations();
-
-                        //Param annotations
-                        $argumentAnnotations = array();
-                        if(isset($annotations['param'])){
-                            foreach($annotations['param'] as $paramAnnotation)
-                            {
-                                $argumentAnnotations[] = $this->_rs->Label('Param: '.$paramAnnotation['name'].' '.$paramAnnotation['type'].' '.$paramAnnotation['comment'])."\n";
-                            }
-                        }
-
-                        $methodsBlock[] = $this->_rs->Paragraph(
-                            $this->_rs->Indented(
-                                implode("", $argumentAnnotations)."\n".
-                                $methodDetails['doc']->getDescription()."\n".
-                                ((!empty($annotations['return'])) ? 'Returns: '.$annotations['return']['type'].' '.$annotations['return']['comment'] : '')
-
-                            )
-                        );
-                    }
-
-                    //Class description
-                    $output[] = $this->_rs->Indented(
-                        $this->_rs->Paragraph($classDetails['doc']->getDescription()).
-                        $this->_rs->Paragraph(implode("\n", $classAnnotations)).
-                        $this->_rs->Hr().
-                        implode("", $methodsBlock)
-                    );
-                }
-            }
-
-            return implode("\n", $output);
+            return Renderer\Element\PageBlock::create($this->_fs, $this->_apiName, $this->_dataCache)
+                ->setConfig($this->_config)
+                ->render();
         }
 
+        /**
+         * @param string $path
+         * @return array
+         */
         private function _getFilesToParse($path)
         {
             $pathMap = new PathMap($path);
-            return $pathMap->getMap();
-        }
 
-        private function _getReflectionClass($path, $className)
-        {
-            require_once($path);
-            return new \ReflectionClass($className);
+            //the result must be reverersed of you get all the sub directories first
+            return array_reverse($pathMap->getMap());
         }
 
     }

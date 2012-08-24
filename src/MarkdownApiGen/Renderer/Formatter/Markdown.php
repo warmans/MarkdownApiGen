@@ -1,14 +1,12 @@
 <?php
-namespace MarkdownApiGen\RenderStrategy {
+namespace MarkdownApiGen\Renderer\Formatter {
 
     /**
-     * GitHub Markdown Strategy s .md documents.
-     *
-     * Defined the interface for a renderer.
+     * Markdown Strategy s .md documents.
      *
      * @author Stefan
      */
-    class GitHubMarkdown extends AbstractRenderer {
+    class Markdown extends AbstractStrategy {
 
         public function H1($text){
             return "$text\n".str_repeat('=', strlen($text));
