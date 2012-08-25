@@ -35,10 +35,10 @@ namespace MarkdownApiGen {
         }
 
         /**
-         * @todo need a design for the complete document. E.g. list of classes at the top or everything inline (namespace -> class -> method -> method)
+         * Parse a package and return the rendered api document as a string.
          *
-         * @param type $packageRoot
-         * @param type $namespace
+         * @param string $packageRoot
+         * @param string $namespace
          */
         public function parsePackage($packageRoot, $namespace)
         {

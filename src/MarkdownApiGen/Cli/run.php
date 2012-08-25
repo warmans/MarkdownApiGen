@@ -2,7 +2,7 @@
 namespace MarkdownApiGen\Cli {
 
     $configs = parse_ini_file(__DIR__.DIRECTORY_SEPARATOR.'config.ini', TRUE);
-    $config = $configs['Input'];
+    $config = $configs['Project Config'];
 
     //config checking
 
