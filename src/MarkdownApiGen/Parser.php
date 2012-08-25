@@ -17,6 +17,7 @@ namespace MarkdownApiGen {
         private $_apiName;
 
         private $_config = array();
+        private $_errors = array();
 
         public function __construct($outputDir, Renderer\Formatter\AbstractStrategy $formatStrategy, $apiName)
         {
@@ -34,6 +35,11 @@ namespace MarkdownApiGen {
             $this->_config = $config;
         }
 
+        public function getErrors()
+        {
+            return $this->_errors;
+        }
+
         /**
          * Parse a package and return the rendered api document as a string.
          *
@@ -44,20 +50,39 @@ namespace MarkdownApiGen {
         {
             foreach($this->_getFilesToParse($packageRoot.DIRECTORY_SEPARATOR.$namespace) as $path=>$className)
             {
-                preg_match("#($namespace.+$className)\.php#", $path, $matches);
+                preg_match(
+                    "#".preg_quote($packageRoot)."(\\\)?(".preg_quote($namespace).".+".preg_quote($className).")\.php#",
+                    $path,
+                    $matches
+                );
 
-                if(!empty($matches[1]))
+                if(!empty($matches[2]))
                 {
-                    $className = '\\'.trim(str_replace('/', '\\', $matches[1]), '\\');
+                    $className = '\\'.trim(str_replace('/', '\\', $matches[2]), '\\');
+                }
+                else {
+                    //unable to parse file path
+                    $this->_errors[] = 'Unable parse path: '.$path;
+                    continue;
                 }
 
-                //include the class
-                require_once($path);
-
-                //fixme: the file we just included may not even be a class...
-                if(class_exists($className))
+                //onlt parse the file if we can obtain a class name. If something isn't a class then we can't do
+                //anything with it anyway
+                if(Util\Code::getClassName(file_get_contents($path)))
                 {
-                    $this->_parseClass(new \ReflectionClass($className));
+
+                    //include the class
+                    require_once($path);
+
+                    //fixme: the file we just included may not even be a class...
+                    if(class_exists($className))
+                    {
+                        $this->_parseClass(new \ReflectionClass($className));
+                    }
+                }
+                else {
+                    $this->_errors[] = 'Unable to locate class name in file: '.$path;
+                    continue;
                 }
             }
 

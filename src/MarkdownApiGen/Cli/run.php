@@ -44,4 +44,16 @@ namespace MarkdownApiGen\Cli {
         $config['package_namespace'])
     );
 
+    if($numErrors = count($parser->getErrors()))
+    {
+        echo "Complete but with $numErrors warning".($numErrors > 1 ? 's' : '').": ".PHP_EOL;
+        foreach($parser->getErrors() as $error)
+        {
+            echo '> '.$error.PHP_EOL;
+        }
+    }
+    else {
+        echo "Completed with no errors. Saved to {$config['output_directory']}";
+    }
+
 }
